@@ -3,9 +3,12 @@ import numpy as np
 import os
 import pickle
 import json
+from dvclive import Live
+import yaml
 
 from sklearn.metrics import accuracy_score, precision_score, f1_score, recall_score
 
+n_estimators = yaml.safe_load(open("params.yaml"))["model_building"]["n_estimators"]
 # test_processed = pd.read_csv("./data/processed/test_processed.csv")
 def load_data(filepath:str) -> pd.DataFrame:
     try:
@@ -78,7 +81,14 @@ def main():
         test_data = load_data(test_data_path)
         X_test, y_test = prepare_data(test_data)
         model = load_model(model_path)
-        metrics = evualation_model(model, X_test,y_test)
+        metrics = evualation_model(model, X_test, y_test)
+        with Live(save_dvc_exp=True) as live:
+            live.log_metric("acc", metrics["acc"])
+            live.log_metric("pre", metrics["pre"])
+            live.log_metric("recall", metrics["recall"])
+            live.log_metric("f1_score", metrics["f1_score"])
+            live.log_param("n_estimators", n_estimators)
+
         save_metrics(metrics, metrics_path)
     except Exception as e:
         raise Exception(f"Error occurred : {e}")
