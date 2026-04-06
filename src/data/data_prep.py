@@ -16,7 +16,7 @@ def fill_missing(df):
     try:
         for column in df.columns:
             if df[column].isnull().any():
-                val = df[column].mean()
+                val = df[column].median()
                 df[column].fillna(val, inplace=True)
 
         return df
@@ -50,8 +50,8 @@ def main():
         test_processed_data = fill_missing(test_data)
 
         os.makedirs(processed_data_path)
-        save_data(train_processed_data, os.path.join(processed_data_path, "train_processed_mean.csv"))
-        save_data(test_processed_data, os.path.join(processed_data_path, "test_processed_mean.csv"))
+        save_data(train_processed_data, os.path.join(processed_data_path, "train_processed_median.csv"))
+        save_data(test_processed_data, os.path.join(processed_data_path, "test_processed_median.csv"))
     except Exception as e:
         raise Exception(f"An error occurred : {e}")
 
