@@ -8,7 +8,7 @@ import yaml
 
 from sklearn.metrics import accuracy_score, precision_score, f1_score, recall_score
 
-n_estimators = yaml.safe_load(open("params.yaml"))["model_building"]["n_estimators"]
+
 # test_processed = pd.read_csv("./data/processed/test_processed.csv")
 def load_data(filepath:str) -> pd.DataFrame:
     try:
@@ -44,6 +44,10 @@ def load_model(model_path:str):
 # y_pred = model.predict(X_test)
 def evualation_model(model, X_test : pd.DataFrame, y_test : pd.Series) -> dict:
     try:
+        params = yaml.safe_load(open("params.yaml"))
+        n_estimators = params["model_building"]["n_estimators"]
+        test_size = params["data_collection"]["test_size"]
+
         y_pred = model.predict(X_test)
 
         acc = accuracy_score(y_test, y_pred)
@@ -57,6 +61,14 @@ def evualation_model(model, X_test : pd.DataFrame, y_test : pd.Series) -> dict:
             'recall': recall,
             'f1_score': f1score
         }
+        with Live(save_dvc_exp=True) as live:
+            live.log_metric("accuracy", acc)
+            live.log_metric("precision", pre)
+            live.log_metric("recall", recall)
+            live.log_metric("f1_score", f1score)
+            live.log_param("n_estimators", n_estimators)
+            live.log_param("test_size", test_size)
+
         return metrics_dict
     except Exception as e:
         raise Exception(f"Error Evaluating model : {e}")
@@ -82,13 +94,6 @@ def main():
         X_test, y_test = prepare_data(test_data)
         model = load_model(model_path)
         metrics = evualation_model(model, X_test, y_test)
-        with Live(save_dvc_exp=True) as live:
-            live.log_metric("acc", metrics["acc"])
-            live.log_metric("pre", metrics["pre"])
-            live.log_metric("recall", metrics["recall"])
-            live.log_metric("f1_score", metrics["f1_score"])
-            live.log_param("n_estimators", n_estimators)
-
         save_metrics(metrics, metrics_path)
     except Exception as e:
         raise Exception(f"Error occurred : {e}")
